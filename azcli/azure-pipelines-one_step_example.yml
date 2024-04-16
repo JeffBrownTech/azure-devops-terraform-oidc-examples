@@ -1,0 +1,60 @@
+# Puts Az CLI login, script, and Terraform actions into single step.
+
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: workingDirectory
+    value: azcli
+
+stages:
+- stage: validate
+  displayName: 'Validate'
+  jobs:
+    - job: Validate
+      steps:
+      - task: AzureCLI@2
+        displayName: 'Terraform Validate'
+        inputs:
+          azureSubscription: 'Demo'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            ./Get-TerraformAzureRmOIDCVariables.ps1
+            
+            terraform init -backend-config backend.hcl
+            terraform validate
+            terraform plan
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          workingDirectory: '$(workingDirectory)'
+          failOnStandardError: true
+
+- stage: deploy
+  displayName: 'Deploy'
+  dependsOn:
+  - validate
+  jobs:
+    - job: 'Deploy'
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: AzureCLI@2
+        displayName: 'Terraform Deploy'
+        inputs:
+          azureSubscription: 'Demo'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            ./Get-TerraformAzureRmOIDCVariables.ps1
+            
+            terraform init -backend-config backend.hcl
+            terraform apply --auto-approve
+          addSpnToEnvironment: true
+          useGlobalConfig: true
+          workingDirectory: '$(workingDirectory)'
+          failOnStandardError: true

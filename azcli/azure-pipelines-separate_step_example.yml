@@ -1,0 +1,74 @@
+# Separates each Terraform action into separate steps in the pipeline.
+# Authorization token is exported in the first steps after logging into Azure using Az CLI.
+# Script then exports information into environment variables.
+
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: workingDirectory
+    value: azcli
+
+stages:
+- stage: validate
+  displayName: 'Validate'
+  jobs:
+    - job: Validate
+      steps:
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'Demo'
+          scriptType: 'pscore'
+          scriptLocation: 'scriptPath'
+          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Get-TerraformAzureRmOIDCVariables.ps1'
+          addSpnToEnvironment: true # Required to add OIDC token to environment
+          useGlobalConfig: true
+          failOnStandardError: true
+
+      - pwsh: |
+          terraform init -backend-config backend.hcl
+        displayName: 'terraform init'
+        workingDirectory: $(workingDirectory)
+
+      - pwsh: |
+          terraform validate
+        displayName: 'terraform validate'
+        workingDirectory: $(workingDirectory)
+
+      - pwsh: |
+          terraform plan
+        displayName: 'terraform plan'
+        workingDirectory: $(workingDirectory)
+
+- stage: deploy
+  displayName: 'Deploy'
+  dependsOn:
+  - validate
+  jobs:
+    - job: 'Deploy'
+      steps:
+      - checkout: self
+        clean: true
+      
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'Demo'
+          scriptType: 'pscore'
+          scriptLocation: 'scriptPath'
+          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Get-TerraformAzureRmOIDCVariables.ps1'
+          addSpnToEnvironment: true # Required to add OIDC token to environment
+          useGlobalConfig: true
+          failOnStandardError: true
+
+      - pwsh: |
+          terraform init -backend-config backend.hcl
+        displayName: 'terraform init'
+        workingDirectory: $(workingDirectory)
+
+      - pwsh: |
+          terraform apply --auto-approve
+        displayName: 'terraform apply'
+        workingDirectory: $(workingDirectory)

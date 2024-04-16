@@ -1,0 +1,83 @@
+# TerraformTask example with service connection using Workload Identity federation (OIDC).
+# Ideally nothing changes in this deployment as the authentication is performed through the service connection.
+
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables: 
+- name: workingDirectory
+  value: 'terraformtask'
+
+stages:
+- stage: validate
+  displayName: 'Validate'
+  jobs:
+    - job: Validate
+      steps:
+      - checkout: self
+        clean: true
+
+      - task: TerraformInstaller@1
+        displayName: 'Install Terraform'
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTaskV4@4
+        displayName: 'terraform init'
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(workingDirectory)'
+          backendServiceArm: 'Demo'
+          backendAzureRmResourceGroupName: 'tfstate-demo-rg'
+          backendAzureRmStorageAccountName: 'jbttfstatedemosa'
+          backendAzureRmContainerName: 'tfstate'
+          backendAzureRmKey: 'demo.tfstate'
+        env:
+          ARM_USE_AZUREAD: true
+      
+      # add validate task
+      # add plan task
+
+- stage: deploy
+  displayName: 'Deploy'
+  dependsOn:
+  - validate
+  jobs:
+    - job: 'Deploy'
+      steps:
+      - checkout: self
+        clean: true
+      
+      - task: TerraformInstaller@1
+        displayName: 'Install Terraform'
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTaskV4@4
+        displayName: 'terraform init'
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(workingDirectory)'
+          backendServiceArm: 'Demo'
+          backendAzureRmResourceGroupName: 'tfstate-demo-rg'
+          backendAzureRmStorageAccountName: 'jbttfstatedemosa'
+          backendAzureRmContainerName: 'tfstate'
+          backendAzureRmKey: 'demo.tfstate'
+        env:
+          ARM_USE_AZUREAD: true
+
+      - task: TerraformTaskV4@4
+        displayName: 'terraform apply'
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(workingDirectory)'
+          commandOptions: 'demo.tfplan'
+          environmentServiceNameAzureRM: 'Demo'
+        env:
+          ARM_USE_AZUREAD: true
