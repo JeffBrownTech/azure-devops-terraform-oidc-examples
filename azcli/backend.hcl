@@ -1,5 +1,5 @@
-resource_group_name = "tfstate-demo-rg"
-storage_account_name = "jbttfstatedemosa"
-container_name = "tfstate"
-key = "azcli-demo.tfstate"
+resource_group_name = "<resource group name>"
+storage_account_name = "<storage account name>"
+container_name = "<container name>"
+key = "<state file name>"
 use_azuread_auth = true

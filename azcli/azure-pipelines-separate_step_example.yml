@@ -3,7 +3,7 @@
 # Script then exports information into environment variables.
 
 trigger:
-- none
+- main
 
 pool:
   vmImage: ubuntu-latest
@@ -20,10 +20,10 @@ stages:
       steps:
       - task: AzureCLI@2
         inputs:
-          azureSubscription: 'Demo'
+          azureSubscription: '<service connection>'
           scriptType: 'pscore'
           scriptLocation: 'scriptPath'
-          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Get-TerraformAzureRmOIDCVariables.ps1'
+          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Set-TerraformAzureRmOIDCVariables.ps1'
           addSpnToEnvironment: true # Required to add OIDC token to environment
           useGlobalConfig: true
           failOnStandardError: true
@@ -55,10 +55,10 @@ stages:
       
       - task: AzureCLI@2
         inputs:
-          azureSubscription: 'Demo'
+          azureSubscription: '<service connection>'
           scriptType: 'pscore'
           scriptLocation: 'scriptPath'
-          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Get-TerraformAzureRmOIDCVariables.ps1'
+          scriptPath: '$(System.DefaultWorkingDirectory)/azcli/Set-TerraformAzureRmOIDCVariables.ps1'
           addSpnToEnvironment: true # Required to add OIDC token to environment
           useGlobalConfig: true
           failOnStandardError: true

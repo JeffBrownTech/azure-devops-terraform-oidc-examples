@@ -19,7 +19,7 @@ provider "azurerm" {
 }
 
 provider "azuredevops" {
-  org_service_url = "https://dev.azure.com/JeffBrownTech"
+  org_service_url = "https://dev.azure.com/<organization name>"
   use_oidc        = true
 }
 

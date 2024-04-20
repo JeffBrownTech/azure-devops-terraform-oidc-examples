@@ -2,7 +2,7 @@
 # Ideally nothing changes in this deployment as the authentication is performed through the service connection.
 
 trigger:
-- none
+- main
 
 pool:
   vmImage: ubuntu-latest
@@ -31,16 +31,30 @@ stages:
           provider: 'azurerm'
           command: 'init'
           workingDirectory: '$(workingDirectory)'
-          backendServiceArm: 'Demo'
-          backendAzureRmResourceGroupName: 'tfstate-demo-rg'
-          backendAzureRmStorageAccountName: 'jbttfstatedemosa'
-          backendAzureRmContainerName: 'tfstate'
-          backendAzureRmKey: 'demo.tfstate'
+          backendServiceArm: '<service connection>'
+          backendAzureRmResourceGroupName: '<resource group name>'
+          backendAzureRmStorageAccountName: '<storage account name>'
+          backendAzureRmContainerName: '<container name>'
+          backendAzureRmKey: '<state file name>'
         env:
           ARM_USE_AZUREAD: true
       
-      # add validate task
-      # add plan task
+      - task: TerraformTaskV4@4
+        displayName: 'terraform validate'
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+          workingDirectory: '$(workingDirectory)'
+      
+      - task: TerraformTaskV4@4
+        displayName: 'terraform plan'
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(workingDirectory)'
+          environmentServiceNameAzureRM: '<service connection>'
+        env:
+          ARM_USE_AZUREAD: true
 
 - stage: deploy
   displayName: 'Deploy'
@@ -63,11 +77,11 @@ stages:
           provider: 'azurerm'
           command: 'init'
           workingDirectory: '$(workingDirectory)'
-          backendServiceArm: 'Demo'
-          backendAzureRmResourceGroupName: 'tfstate-demo-rg'
-          backendAzureRmStorageAccountName: 'jbttfstatedemosa'
-          backendAzureRmContainerName: 'tfstate'
-          backendAzureRmKey: 'demo.tfstate'
+          backendServiceArm: '<service connection>'
+          backendAzureRmResourceGroupName: '<resource group name>'
+          backendAzureRmStorageAccountName: '<storage account name>'
+          backendAzureRmContainerName: '<container name>'
+          backendAzureRmKey: '<state file name>'
         env:
           ARM_USE_AZUREAD: true
 
@@ -77,7 +91,6 @@ stages:
           provider: 'azurerm'
           command: 'apply'
           workingDirectory: '$(workingDirectory)'
-          commandOptions: 'demo.tfplan'
-          environmentServiceNameAzureRM: 'Demo'
+          environmentServiceNameAzureRM: '<service connection>'
         env:
           ARM_USE_AZUREAD: true
